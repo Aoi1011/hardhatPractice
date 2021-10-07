@@ -19,7 +19,7 @@ contract Escrow {
     State public state;
 
     modifier condition(bool _condition) {
-        require(_condition);
+        require(_condition, "");
         _;
     }
 
@@ -56,4 +56,12 @@ contract Escrow {
     event Restarted(uint256 when);
 
     event End(uint256 when);
+
+    constructor() payable {
+        seller = payable(msg.sender);
+
+        price = msg.value / 2;
+
+        require((2 * price) == msg.value, "Value has to be even");
+    }
 }
