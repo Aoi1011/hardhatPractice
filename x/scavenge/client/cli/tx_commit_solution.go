@@ -1,13 +1,16 @@
 package cli
 
 import (
+	"crypto/sha256"
+	"encoding/hex"
 	"strconv"
+
+	"scavenge/x/scavenge/types"
 
 	"github.com/cosmos/cosmos-sdk/client"
 	"github.com/cosmos/cosmos-sdk/client/flags"
 	"github.com/cosmos/cosmos-sdk/client/tx"
 	"github.com/spf13/cobra"
-	"scavenge/x/scavenge/types"
 )
 
 var _ = strconv.Itoa(0)
@@ -16,20 +19,31 @@ func CmdCommitSolution() *cobra.Command {
 	cmd := &cobra.Command{
 		Use:   "commit-solution [solution-hash] [solution-scavenger-hash]",
 		Short: "Broadcast message commit-solution",
-		Args:  cobra.ExactArgs(2),
+		Args:  cobra.ExactArgs(1),
 		RunE: func(cmd *cobra.Command, args []string) (err error) {
-			argSolutionHash := args[0]
-			argSolutionScavengerHash := args[1]
-
 			clientCtx, err := client.GetClientTxContext(cmd)
 			if err != nil {
 				return err
 			}
 
+			solution := args[0]
+
+			solutionHash := sha256.Sum256([]byte(solution))
+
+			solutionHashString := hex.EncodeToString(solutionHash[:])
+
+			var scavenger = clientCtx.GetFromAddress().String()
+
+			var solutionScavengerHash = sha256.Sum256([]byte(solution + scavenger))
+
+			var solutionScavengerHashString = hex.EncodeToString(solutionScavengerHash[:])
+
+			// argSolutionScavengerHash := args[1]
+
 			msg := types.NewMsgCommitSolution(
 				clientCtx.GetFromAddress().String(),
-				argSolutionHash,
-				argSolutionScavengerHash,
+				string(solutionHashString),
+				string(solutionScavengerHashString),
 			)
 			if err := msg.ValidateBasic(); err != nil {
 				return err
